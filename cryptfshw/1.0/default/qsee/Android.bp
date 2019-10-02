@@ -28,9 +28,6 @@ cc_binary {
     ],
     arch: {
         arm: {
-            shared_libs: [
-                "libhwbinder",
-            ],
             cflags: ["-DARCH_ARM_32"],
         },
     },
@@ -39,7 +36,6 @@ cc_binary {
         "libbase",
         "libdl",
         "libhidlbase",
-        "libhidltransport",
         "libutils",
         "vendor.qti.hardware.cryptfshw@1.0",
     ],
