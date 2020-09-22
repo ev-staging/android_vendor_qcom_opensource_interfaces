@@ -50,7 +50,7 @@ int MapUsage(int storage_type, int usage) {
 
 bool IsHwDiskEncryption(const hidl_string& encryption_mode) {
     if (encryption_mode == "aes-xts") {
-        LOG_TO(SYSTEM, DEBUG) << "HW based disk encryption is enabled";
+        LOG(DEBUG) << "HW based disk encryption is enabled";
         return true;
     }
     return false;
@@ -99,7 +99,7 @@ Return<int32_t> CryptfsHw::setKey(const hidl_string& passwd, const hidl_string& 
                                  passwd.c_str());
     if (err < 0) {
         if (ERR_MAX_PASSWORD_ATTEMPTS == err)
-            LOG_TO(SYSTEM, INFO) << "Maximum wrong password attempts reached, will erase userdata";
+            LOG(INFO) << "Maximum wrong password attempts reached, will erase userdata";
     }
 
     return err;
@@ -115,7 +115,7 @@ Return<int32_t> CryptfsHw::updateKey(const hidl_string& oldpw, const hidl_string
                                  oldpw.c_str(), newpw.c_str());
     if (err < 0) {
         if (ERR_MAX_PASSWORD_ATTEMPTS == err)
-            LOG_TO(SYSTEM, INFO) << "Maximum wrong password attempts reached, will erase userdata";
+            LOG(INFO) << "Maximum wrong password attempts reached, will erase userdata";
     }
 
     return err;

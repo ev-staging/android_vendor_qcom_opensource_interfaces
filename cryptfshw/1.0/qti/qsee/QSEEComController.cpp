@@ -74,7 +74,7 @@ Controller::Controller() {
     }
 
     if (!IsQseecomUp()) {
-        LOG_TO(SYSTEM, ERROR)
+        LOG(ERROR)
                 << "Timed out waiting for QSEECom listeners. Aborting FDE key operation";
         return;
     }
@@ -102,7 +102,7 @@ int Controller::createKey(int usage, const char* passwd) {
     if (mFn_create_key == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
 
     if (usage < CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION || usage > CRYPTFS_HW_KM_USAGE_MAX) {
-        LOG_TO(SYSTEM, ERROR) << "Error:: unsupported usage " << usage;
+        LOG(ERROR) << "Error:: unsupported usage " << usage;
         return CRYPTFS_HW_CREATE_KEY_FAILED;
     }
 
@@ -110,14 +110,14 @@ int Controller::createKey(int usage, const char* passwd) {
 
     ret = mFn_create_key(usage, hash32);
     if (ret) {
-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to create encryption key for usage " << usage
+        LOG(ERROR) << "Error::Qseecom call to create encryption key for usage " << usage
                               << " failed with ret = " << ret << ", errno = " << errno;
         if (errno == ERANGE)
             ret = CRYPTFS_HW_KMS_MAX_FAILURE;
         else
             ret = CRYPTFS_HW_CREATE_KEY_FAILED;
     } else {
-        LOG_TO(SYSTEM, ERROR) << "SUCESS::Qseecom call to create encryption key for usage " << usage
+        LOG(ERROR) << "SUCESS::Qseecom call to create encryption key for usage " << usage
                               << " success with ret = " << ret;
     }
 
@@ -133,7 +133,7 @@ int Controller::updateKey(int usage, const char* oldpw, const char* newpw) {
     if (mFn_update_key_user_info == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
 
     if (usage < CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION || usage > CRYPTFS_HW_KM_USAGE_MAX) {
-        LOG_TO(SYSTEM, ERROR) << "Error:: unsupported usage " << usage;
+        LOG(ERROR) << "Error:: unsupported usage " << usage;
         return CRYPTFS_HW_UPDATE_KEY_FAILED;
     }
 
@@ -142,14 +142,14 @@ int Controller::updateKey(int usage, const char* oldpw, const char* newpw) {
 
     ret = mFn_update_key_user_info(usage, current_hash32, new_hash32);
     if (ret) {
-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to update the encryption key for usage "
+        LOG(ERROR) << "Error::Qseecom call to update the encryption key for usage "
                               << usage << " failed with ret = " << ret << ", errno = " << errno;
         if (errno == ERANGE)
             ret = CRYPTFS_HW_KMS_MAX_FAILURE;
         else
             ret = CRYPTFS_HW_UPDATE_KEY_FAILED;
     } else {
-        LOG_TO(SYSTEM, ERROR) << "SUCCESS::Qseecom call to update the encryption key for usage "
+        LOG(ERROR) << "SUCCESS::Qseecom call to update the encryption key for usage "
                               << usage << " success with ret = " << ret;
     }
 
@@ -165,17 +165,17 @@ int Controller::wipeKey(int usage) {
     if (mFn_wipe_key == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
 
     if (usage < CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION || usage > CRYPTFS_HW_KM_USAGE_MAX) {
-        LOG_TO(SYSTEM, ERROR) << "Error:: unsupported usage " << usage;
+        LOG(ERROR) << "Error:: unsupported usage " << usage;
         return CRYPTFS_HW_UPDATE_KEY_FAILED;
     }
 
     ret = mFn_wipe_key(usage);
     if (ret) {
-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to wipe the encryption key for usage "
+        LOG(ERROR) << "Error::Qseecom call to wipe the encryption key for usage "
                               << usage << " failed with ret = " << ret << ", errno = " << errno;
         ret = CRYPTFS_HW_WIPE_KEY_FAILED;
     } else {
-        LOG_TO(SYSTEM, ERROR) << "SUCCESS::Qseecom call to wipe the encryption key for usage "
+        LOG(ERROR) << "SUCCESS::Qseecom call to wipe the encryption key for usage "
                               << usage << " success with ret = " << ret;
     }
     return ret;
