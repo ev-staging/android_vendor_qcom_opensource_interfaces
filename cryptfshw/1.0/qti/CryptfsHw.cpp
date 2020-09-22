@@ -16,15 +16,15 @@
 
 #define LOG_TAG "vendor.qti.hardware.cryptfshw@1.0-impl-qti"
 
-#include "CryptfsHw.h"
+#include <dlfcn.h>
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/unique_fd.h>
-#include <dlfcn.h>
 #include <linux/qseecom.h>
 
-#include "Types.h"
+#include <CryptfsHw.h>
+#include <Types.h>
 
 namespace vendor {
 namespace qti {
@@ -37,6 +37,17 @@ using ::android::base::GetProperty;
 using ::android::base::unique_fd;
 
 namespace {
+int MapUsage(int storage_type, int usage) {
+    if (usage == CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION) {
+        if (storage_type == QTI_ICE_STORAGE_UFS) {
+            return CRYPTFS_HW_KM_USAGE_UFS_ICE_DISK_ENCRYPTION;
+        } else if (storage_type == QTI_ICE_STORAGE_SDCC) {
+            return CRYPTFS_HW_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION;
+        }
+    }
+    return usage;
+}
+
 bool IsHwDiskEncryption(const hidl_string& encryption_mode) {
     if (encryption_mode == "aes-xts") {
         LOG(DEBUG) << "HW based disk encryption is enabled";
@@ -55,11 +66,11 @@ CryptfsHw::CryptfsHw(std::unique_ptr<ICryptfsHwController> controller)
          * All UFS based devices has ICE in it. So we dont need
          * to check if corresponding device exists or not
          */
-        usage_ = CRYPTFS_HW_KM_USAGE_UFS_ICE_DISK_ENCRYPTION;
-    } else if (bootdevice.find("sdhc") != std::string::npos && access("/dev/icesdcc", F_OK) != -1) {
-        usage_ = CRYPTFS_HW_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION;
-    } else {
-        usage_ = CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION;
+        storage_type_ = QTI_ICE_STORAGE_UFS;
+    } else if (bootdevice.find("sdhc") != std::string::npos) {
+        if (access("/dev/icesdcc", F_OK) != -1) {
+            storage_type_ = QTI_ICE_STORAGE_SDCC;
+        }
     }
 }
 
@@ -84,7 +95,8 @@ Return<int32_t> CryptfsHw::setKey(const hidl_string& passwd, const hidl_string& 
 
     if (!IsHwDiskEncryption(enc_mode)) return err;
 
-    err = controller_->createKey(usage_, passwd.c_str());
+    err = controller_->createKey(MapUsage(storage_type_, CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION),
+                                 passwd.c_str());
     if (err < 0) {
         if (ERR_MAX_PASSWORD_ATTEMPTS == err)
             LOG(INFO) << "Maximum wrong password attempts reached, will erase userdata";
@@ -99,7 +111,8 @@ Return<int32_t> CryptfsHw::updateKey(const hidl_string& oldpw, const hidl_string
 
     if (!IsHwDiskEncryption(enc_mode)) return err;
 
-    err = controller_->updateKey(usage_, oldpw.c_str(), newpw.c_str());
+    err = controller_->updateKey(MapUsage(storage_type_, CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION),
+                                 oldpw.c_str(), newpw.c_str());
     if (err < 0) {
         if (ERR_MAX_PASSWORD_ATTEMPTS == err)
             LOG(INFO) << "Maximum wrong password attempts reached, will erase userdata";
@@ -109,7 +122,7 @@ Return<int32_t> CryptfsHw::updateKey(const hidl_string& oldpw, const hidl_string
 }
 
 Return<int32_t> CryptfsHw::clearKey() {
-    return controller_->wipeKey(usage_);
+    return controller_->wipeKey(MapUsage(storage_type_, CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION));
 }
 
 }  // namespace implementation
